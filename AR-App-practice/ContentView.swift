@@ -4,7 +4,7 @@ import SceneKit
 
 struct ContentView : View {
     @State private var isShowAR=false;
-    @State private var showWord=""
+    @State private var showWord = "";
  
     
     var body: some View {
