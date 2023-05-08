@@ -1,86 +1,60 @@
 import SwiftUI
-import RealityKit
-import SceneKit
+import Foundation
+
 
 struct ContentView : View {
-    @State private var isShowAR=false;
-    @State private var showWord = "";
- 
-    
+	
+	@EnvironmentObject var drawingDataSource:DrawingDataSource
+	@State private var drawingData:DrawingData? = nil
+	@State private var isAddView = false
+
     var body: some View {
-      
-        if isShowAR {
-            ZStack{
-                ARViewContainer(word:showWord).edgesIgnoringSafeArea(.all)
+		
+		VStack{
+			NavigationStack{
+				HStack(spacing: 30){
+					Spacer()					
+					Button(action:{
+						let d = DrawingData(id:UUID(),userID: "dd", title: "TEST", canvas: nil, pencilData: nil, registrationDate: Date(), upDateDate: Date())
+						drawingData=d
+						drawingDataSource.add(new: d)
+						isAddView.toggle()
+					}){
+						Image(systemName: "plus.circle")
+							.resizable()
+							.frame(width: 30, height: 30)
+					}.navigationDestination(isPresented: $isAddView) {
+						if let unwrappedDrawingData=drawingData{
+							CanvasContentView(drawingData: unwrappedDrawingData)
+						}
+					
+					}
 
-                Button(action: {
-                    isShowAR.toggle()
-                }){
-                    Text("閉じる").font(.system(size:24)).foregroundColor(Color.white).background(Color.blue)
-                }.padding(.top, 10.0).position(x:60,y:20)
-
-            }
-
-        }else{
-            VStack{
-                Text("AR練習用アプリ")
-                    .font(.system(size:32))
-                    .foregroundColor(Color.blue)
-                
-                Form{
-                    TextField("表示させる文字を入力してください",text:$showWord)
-                }.frame(height: 100)
-
-                Button(action:{
-                    isShowAR.toggle()
-                }){
-                    Text("AR表示").font(.system(size:24))
-                }.padding(.top, 10.0).border(Color.blue)
-                
-                
-
-            }
-        }
-        
+				}.padding(.top, 10).padding(.trailing, 30).padding(.bottom,20)
+			
+				NormalHeader(text: "お絵描き一覧").padding(.bottom,20)
+				
+				Divider()
+				
+				if drawingDataSource.drawingDataList.isEmpty{
+					Text("まだ、絵はありません。")
+					Spacer().frame(height: 10)
+					Text("画面の右上にある＋ボタンから、")
+					Text("絵を追加しましょう。")
+				}else{
+					CanvasPreviewList(drawingDataList: drawingDataSource.drawingDataList)
+				}
+				Spacer()
+				
+			}
+			
+		}
+		
     }
 }
 
-struct ARViewContainer: UIViewRepresentable {
-    
-    var word:String
-    
-    init(word: String) {
-        self.word = word
-    }
-    
-    func makeUIView(context: Context) -> ARView {
-        
-        let arView = ARView(frame: .zero)
-        
-        // Load the "Box" scene from the "Experience" Reality File
-//        let boxAnchor = try! Experience.loadBox()
-        
-        // Add the box anchor to the scene
-//        arView.scene.anchors.append(boxAnchor)
-        
-        //https://qiita.com/john-rocky/items/77dd077a5778c7ca9369
-        let anchor = AnchorEntity()
-        anchor.position = simd_make_float3(0, -0.5, -1)
 
-        let text = ModelEntity(mesh: .generateText(word, extrusionDepth: 0.03, font: .systemFont(ofSize: 0.1, weight: .bold), containerFrame: CGRect.zero, alignment: .center, lineBreakMode: .byCharWrapping))
-      
-        text.transform = Transform(pitch: 0, yaw: 0.3, roll: 0)
-                
-        anchor.addChild(text)
-        arView.scene.anchors.append(anchor)
-        
-        return arView
-        
-    }
-    
-    func updateUIView(_ uiView: ARView, context: Context) {}
-    
-}
+
 
 #if DEBUG
 struct ContentView_Previews : PreviewProvider {
